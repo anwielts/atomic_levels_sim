@@ -17,7 +17,15 @@ python main.py -h
 
 ## Prerequisites
 
-Python 3 has to be installed to use the simulation. All python package prerequisites are listed in the requirements.txt.
+Python 3 has to be installed to use the simulation. All python package prerequisites are listed in the requirements.txt. Install the 
+packages via
+```
+pip install requirements.txt
+```
+
+## Authors
+
+* **Andreas Wieltsch** - [anwielts](https://github.com/anwielts)
 
 ## License
 
