@@ -1,0 +1,5 @@
+{
+  "test_light_atom_interaction.py::Light_Atom_Interaction_Test::testDopplerShift": true,
+  "test_light_atom_interaction.py::Light_Atom_Interaction_Test::testLorentzianProbability": true,
+  "test_magnetic_field.py::Magnetic_Field_Test::testMagneticFieldFunction": true
+}

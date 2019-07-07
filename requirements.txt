@@ -1,0 +1,6 @@
+atomic-level-sim
+matplotlib>=3.0.1
+numba>=0.41.0
+numpy>=1.16.2
+scipy>=1.1.0
+tqdm>=4.26.0
