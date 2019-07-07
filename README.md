@@ -6,11 +6,14 @@ setup used in this repository as an example are those of the Lithium experiment.
 
 ## Getting Started
 
-Using the setup files in the example folder you can run
+Using the setup files in the example folder sim_setup you can run
 '''
-python main.py
+python main.py --sim_params_file sim_setup/sim_parameter_Li_6.json --exp_params_file sim_setup/exp_setup_Li_6.json --atom_params_file sim_setup/atom_parameter_Li_6.json --raw_magnetic_field_data sim_setup/example_magnetic_field.txt --max_step_size sim_setup/example_magnetic_field_maximum_step_length.txt
 '''
-and get simulation results (log file, plots) in a result folder.
+and get simulation results (log file, plots) in a result folder (simulation_results). A short help is provided running the command
+'''
+python main.py -h
+'''
 
 ## Prerequisites
 
