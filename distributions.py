@@ -32,15 +32,16 @@ def maxwell_boltzmann_distribution_v_3(velocity, mass, temperature):
 def uniform_distribution(start_value, end_value):
 
     uniform_value = random.uniform(start_value, end_value)
-	
+
     return uniform_value
+
 
 # function calculates a value from a given gaussian distribution
 #@profile	
 def gauss_distribution(mu, sigma):
 
     gauss_value = random.gauss(mu, sigma)
-	
+
     return gauss_value
 
 # function samples numbers from a distribution, in this case from the Maxwell Boltzmann distribution
@@ -50,9 +51,11 @@ def number_sampling(distribution, max_value, start_value, end_value, mass, tempe
 
     # first a random value is uniformly drawn between a lower and an upper limit (e.g. minimal and maximal velocity)
     random_val = uniform_distribution(start_value, end_value)
-    # a sample is drawn uniformly between 0 and the maximum probability (e.g. maximal probability of a Maxwell Boltzmann distribution for a given atom, velocity range and temperature)
+    # a sample is drawn uniformly between 0 and the maximum probability (e.g. maximal probability of a
+    # Maxwell Boltzmann distribution for a given atom, velocity range and temperature)
     sample = uniform_distribution(0, max_value)
-    # if the sample value is smaller than the value from the Maxwell Boltzmann disribution it is returned, if not number_sampling is recursively called
+    # if the sample value is smaller than the value from the Maxwell Boltzmann disribution it is returned,
+    # if not number_sampling is recursively called
     if sample < maxwell_boltzmann_distribution_v_3(random_val, mass, temperature):
         return random_val
     else:

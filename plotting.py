@@ -4,7 +4,27 @@ from collections import defaultdict
 # for plotting several plots into one pdf
 from matplotlib.backends.backend_pdf import PdfPages
 
-def line_plotting(x_values, y_values, x_label, y_label, x_lim_min, x_lim_max, y_lim_min, y_lim_max, starting_time):
+
+def line_plotting(x_values, y_values, x_label, y_label, x_lim_min, x_lim_max, y_lim_min, y_lim_max, starting_time, preserve_color_flag):
+    '''
+    :param x_values: List of floats, containing the x values for the plot (e.g. distance values)
+    :param y_values: List of floats, containing the y values for the plot (e.g. velocity values)
+    :param x_label: String, the label for the x-axis.
+    :param y_label: String, the label for the y-axis.
+    :param x_lim_min: Float, minimum x value which is plotted.
+    :param x_lim_max: Float, maximum x value which is plotted.
+    :param y_lim_min: Float, minimum y value which is plotted.
+    :param y_lim_max: Float, maximum y value which is plotted.
+    :param starting_time: Datetime object, starting time of the simulation run.
+    :param preserve_color_flag: Boolean, True preserves the color of a given atom between several simulation runs.
+    True can only be used if the number of atoms smaller/equal to 10. False enables the plotting of more than 10 atoms.
+    :return: Nothing, a matplotlib.pyplot plot object is saved to the folder of the simulation run.
+
+    Plots a line plot of e.g. the velocity value of atoms versus the position. The dependent variable could also
+    be the excitation probability or the magnetic field strength. If several dependent variables should be plotted
+    depending on the position on the z-axis the eval_plotting function should be used.
+    '''
+
     x_values_dict = defaultdict(list)
     y_values_dict = defaultdict(list)
     color_dict = {0:'green', 1:'blue', 2:'red',
@@ -22,11 +42,13 @@ def line_plotting(x_values, y_values, x_label, y_label, x_lim_min, x_lim_max, y_
             y_values_dict[pos_counter].append(y_values[i])
 
     for key in x_values_dict:
-        plt.plot(x_values_dict[key], y_values_dict[key], linewidth=3, color=color_dict[key])
+        if preserve_color_flag is True:
+            plt.plot(x_values_dict[key], y_values_dict[key], linewidth=3, color=color_dict[key])
+        else:
+            plt.plot(x_values_dict[key], y_values_dict[key], linewidth=3)
     plt.xlabel(x_label + ' (m)', fontweight='bold', fontsize=16)
     plt.ylabel(y_label + ' (m/s)', fontweight='bold', fontsize=16)
-    plt.plot((0.5, 0.5), (0, y_lim_max), linestyle='-', color='grey',
-                     alpha=0.5)
+    # plt.plot((0.5, 0.5), (0, y_lim_max), linestyle='-', color='grey', alpha=0.5)
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.xlim(x_lim_min, x_lim_max)
@@ -37,7 +59,30 @@ def line_plotting(x_values, y_values, x_label, y_label, x_lim_min, x_lim_max, y_
     # plt.show()
     plt.close()
 
+
 def hist_plotting(title, x_label, y_label, x_lim_min, x_lim_max, y_lim_min, y_lim_max, bin_count, legend, start_dist_upper_state, start_dist_lower_state, starting_time, *args):
+    '''
+    :param title: String, the title of the plot.
+    :param x_label: String, the label for the x-axis.
+    :param y_label: String, the label for the y-axis.
+    :param x_lim_min: Float, minimum x value which is plotted.
+    :param x_lim_max: Float, maximum x value which is plotted.
+    :param y_lim_min: Float, minimum y value which is plotted.
+    :param y_lim_max: Float, maximum y value which is plotted.
+    :param bin_count: Integer, number of bins.
+    :param legend: List of strings, containing the labels of the two distributions.
+    :param start_dist_upper_state: List of floats, containing the distribution of the upper ground state.
+    :param start_dist_lower_state: List of floats, containing the distribution of the lower ground state.
+    :param starting_time: Datetime object, starting time of the simulation run.
+    :param args: Lists of floats, containing velocity distributions.
+    :return: Nothing, a matplotlib.pyplot histogram object is saved to the folder of the simulation run.
+
+    Right now only simulations of alkali atoms are supported and therefor the start and final velocity distribution
+    of the upper and lower substates of the splitted ground state are interesting for evaluating the performance of
+    a Zeeman slower design. This function plots a histogram of the start and final (at the MOT) velocity distribution
+    for each of the ground states.
+    '''
+
     color_list = ['blue','red']
     i = 0
     for arg in args:
@@ -67,6 +112,13 @@ def hist_plotting(title, x_label, y_label, x_lim_min, x_lim_max, y_lim_min, y_li
 
 
 def make_patch_spines_invisible(ax):
+    '''
+    :param ax: Ax-object.
+    :return: Nothing.
+
+    A helper function for the slice_plotting function.
+    '''
+
     ax.set_frame_on(True)
     ax.patch.set_visible(False)
     for sp in ax.spines.values():
@@ -74,6 +126,25 @@ def make_patch_spines_invisible(ax):
 
 
 def slice_plotting(slice_positions, slice_pos_vel_upper_gs, slice_pos_vel_lower_gs, min_velocity, max_velocity, number_of_atoms, bin_number, starting_time):
+    '''
+    :param slice_positions: List of floats, containing the positions at which velocity distributions were observed.
+    :param slice_pos_vel_upper_gs: List of floats, containing the velocity values at the slicing positions of the upper ground state.
+    :param slice_pos_vel_lower_gs: List of floats, containing the velocity values at the slicing positions of the lower ground state.
+    :param min_velocity: Integer, minimum velocity plotted on the x-axis.
+    :param max_velocity: Integer, maximum velocity plotted on the x-axis.
+    :param number_of_atoms: Integer, number of atoms used in the simulation run.
+    :param bin_number: Integer, number of bins.
+    :param starting_time: Datetime object, starting time of the simulation run.
+    :return: Nothing, several matplotlib.pyplot histogram objects are saved to the folder of the simulation run.
+    Number of plots = len(slice_positions)
+
+    Plots histograms of the velocity distribution of the upper and lower ground state at several positions specified
+    with slice_positions. Through this the development of the distributions is made visible and optical pumping effects
+    can be observed. The x-axes of the plot show the fluorescence frequency of the atom and the two velocity axes
+    for the lower and upper ground state, respectively. These two axes are shifted by 228 MHz which is the splitting
+    between the two ground states in Lithium-6.
+    '''
+
     # str_plane_slice_pos = [0.0, 0.1, 0.2, 0.3, 0.4, 0.49, 0.495, 0.496, 0.5]
     labelsize_dist_plot = 12
     with PdfPages('simulation_results/' + str(starting_time.strftime(
@@ -133,6 +204,18 @@ def slice_plotting(slice_positions, slice_pos_vel_upper_gs, slice_pos_vel_lower_
 
 
 def state_occupation_development_plot(ground_state_m_j, excited_state_m_j, excitation_probability_dev, starting_time):
+    '''
+    :param ground_state_m_j: Float, quantum number m_j of the ground state
+    :param excited_state_m_j: Float, quantum number of the excietd state
+    :param excitation_probability_dev: List of floats, contains the excitation probability along the
+    trajectory of the atom.
+    :param starting_time: Datetime object, starting time of the simulation run.
+    :return: Nothing, a matplotlib.pyplot plot object is saved to the folder of the simulation run.
+
+    This plot shows the transition between the sub states of the excited and ground state along a trajectory
+    of an atom.
+    '''
+
     fig, ax1 = plt.subplots()
     ax1.plot(ground_state_m_j, 'b+')
     ax1.plot(excited_state_m_j, 'b*')
@@ -155,6 +238,32 @@ def state_occupation_development_plot(ground_state_m_j, excited_state_m_j, excit
 def eval_plotting(number_of_atoms, min_velocity, max_velocity, bin_count, atoms_in_mot, observing_z_pos, observing_magnetic_field,
                         excitation_freq_development, excitation_probability_development,
                         vel_z_atoms_in_mot, start_z_vel, zeeman_shift, observing_z_vel, starting_time):
+
+    '''
+    :param number_of_atoms:
+    :param min_velocity: Integer, minimum velocity plotted on the x-axis.
+    :param max_velocity: Integer, maximum velocity plotted on the x-axis.
+    :param bin_count: Integer, number of bins.
+    :param atoms_in_mot: Integer, number of atoms which reached the MOT.
+    :param observing_z_pos: List of floats, containing the position values along the z-axis.
+    :param observing_magnetic_field: List of floats, containing the magnetic field strengths
+    along the trajectory of an atom.
+    :param excitation_freq_development: List of floats, containing the excitation frequencies
+    along the trajectory of an atom.
+    :param excitation_probability_development: List of floats, containing the excitation probability
+    along the trajectory of an atom.
+    :param vel_z_atoms_in_mot: List of floats, containing the velocities of all atoms which reached the MOT.
+    :param start_z_vel: List of floats, containing the start velocities of all atoms which reached the MOT.
+    :param zeeman_shift: List of floats, containg the Zeeman shift (frequency shift caused by the magnetic field)
+    along the trajectory of an atom.
+    :param observing_z_vel: List of floats, containing the velocities along the trajectory of an atom.
+    :param starting_time: Datetime object, starting time of the simulation run.
+    :return: Nothing, several matplotlib.pyplot plot objects are saved to the folder of the simulation run.
+
+    This function creates several line plots of interesting dependent variables such as the excitation frequency
+    or the Zeeman shift depending on the position values of the atom.
+    '''
+
     y_limit = 0.5 * number_of_atoms
     # print some informations to the command line
     print("Atoms in MOT:", atoms_in_mot)

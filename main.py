@@ -610,9 +610,9 @@ if __name__ == '__main__':
     # eval_plotting(number_of_atoms, v_min, v_max, bin_count, atoms_in_mot, observing_z_pos, observing_magnetic_field,
     #                         excitation_freq_development, excitation_probability_development,
     #                         vel_z_atoms_in_mot, start_z_vel, zeeman_shift, observing_z_velocity, startTime)
-    line_plotting(observing_z_position, observing_z_velocity, 'z position', 'z velocity', 0.0, 0.55, 0.0, 1000.0, startTime)
+    line_plotting(observing_z_position, observing_z_velocity, 'z position', 'z velocity', 0.0, 0.55, 0.0, 1000.0, startTime, False)
     # line_plotting(observing_z_position, excitation_freq_development, 'z position', 'excitation_freq_development', 0.0, 0.7, -1E10, 1E10, startTime)
-    line_plotting(observing_z_position, excitation_probability_development, 'z position', 'excitation probability', 0.0, 0.7, 0.0, 0.55, startTime)
+    line_plotting(observing_z_position, excitation_probability_development, 'z position', 'excitation probability', 0.0, 0.7, 0.0, 0.55, startTime, False)
     print(laser_detuning)
     print("Average velocity of atoms in trap center: ", sum(vel_z_atoms_in_mot) / len(vel_z_atoms_in_mot))
     print(len(start_z_vel_atoms_in_mot), len(vel_z_atoms_in_mot))
