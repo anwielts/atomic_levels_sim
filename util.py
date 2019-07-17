@@ -11,6 +11,14 @@ from numba import jit, int32, float64, void
 # @jit -> makes it slower, check why??
 @jit(nopython=True)
 def random_velocity_assignment(complete_velocity):
+    '''
+    :param complete_velocity: Float, velocity value.
+    :return: Floats, the three velocity components in x-, y- and z-direction.
+
+    Divides the complete velocity (magnitude of the velocity vector) into three components and
+    assigns these to the three velocity components (x, y, z). Assigning follows a spherical
+    distribution.
+    '''
     vel = complete_velocity
     # FALSE: draw random numbers between -0.5*math.pi and 0.5*math.pi and 0 and 2
     # times math.pi (spherical coordinate system) for dividing velocity into the three coordinates components
@@ -38,6 +46,18 @@ def random_velocity_assignment(complete_velocity):
 # veloctity range, an atom mass and a temperature
 @jit(cache=True)
 def calculate_p_max(n, v_min, v_max, atom_mass, temperature):
+    '''
+    :param n: Integer, number of atoms.
+    :param v_min: Integer, the minimum velocity.
+    :param v_max: Integer, the maximum velocity.
+    :param atom_mass: Float, the mass of the atoms in the simulation.
+    :param temperature: Float, the evaporation temperature of the atoms.
+    :return: Float, the maximum probability of the Maxwell Boltzmann distribution for the
+    provided velocities, atom mass and temperature.
+
+    Calculates the maximum probability which then can be used for the acceptance-rejection method
+    for drawing random numbers.
+    '''
     p_max = 0
     
     # for loop for 0 to number of atoms

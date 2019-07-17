@@ -12,6 +12,25 @@ from magnetic_field import magnetic_field_spline_fit, spline_fit_field_function,
 
 # setting of all variables and assigning them corresponding values in __init__ function
 def load_files(sim_path, exp_path, atom_path, magn_path, max_step_path):
+    '''
+    :param sim_path: String, path to the JSON file containing information about the
+    simulation parameters.
+    :param exp_path: String, path to the JSON file containing information about the
+    experimental setup.
+    :param atom_path: String, path to the JSON file containing information about the
+    atom species.
+    :param magn_path: String, path to the JSON file containing information about the
+    magnetic field strength.
+    :param max_step_path: String, path to the JSON file containing information about the
+    maximum step distances.
+    :return: JSON objects and a float.
+
+    This function handles the loading of the JSON-files containing the information about the
+    simulation parameter, the experimental setup and the atoms. Additionally, this function loads
+    the file containing the magnetic field strengths and the maximum step distances. The latter one
+    is created if it does not exist.
+    '''
+
     # create lists for storing the magnetic field strength and the corresponding distance value
     magnetic_field_distance = []
     magnetic_strength = []

@@ -1,9 +1,30 @@
 # module for creating pathes, directories and folders
 import pathlib
 
+
 def create_log_file(file_name, atoms_in_mot, excitation_counter, capture_velocity, start_vel_z_mean,
                capture_count_z_velocity, exp_param_config, sim_param_config, running_time, starting_time,
                number_of_bins, max_velocity):
+    '''
+    :param file_name: String, the name of the file containing the magnetic field strengths used for this
+    simulation run.
+    :param atoms_in_mot: Integer, the number of atoms in the MOT.
+    :param excitation_counter: Integer, a counter to provide an information about the total number of
+    excitation loops in the simulation run.
+    :param capture_velocity: Float, below this velocity atoms are assumed to be caught.
+    :param start_vel_z_mean: Float, the mean value of the starting velocity of the atoms..
+    :param capture_count_z_velocity: Integer,
+    :param exp_param_config: Dictionary,
+    :param sim_param_config: Dictionary,
+    :param running_time: Datetime object, total running time of the simulation run.
+    :param starting_time: Datetime object, starting time of the simulation run.
+    :param number_of_bins: Integer, the number of bins used for the histogram plotting.
+    :param max_velocity: Float, the maximum velocity of all atoms.
+    :return: Nothing, a log-file (TXT-file) is created.
+
+    Writes the above provided information to a log-file in the same directory the other simulation results
+    are saved to.
+    '''
     # create the path to and the directory of the resulting log file
     pathlib.Path('simulation_results/' + str(starting_time.strftime("%Y_%m_%d %H_%M_%S"))).mkdir(parents=True,
                                                                                              exist_ok=True)
