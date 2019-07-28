@@ -69,14 +69,21 @@ from numba import jit, int32, float64, void, cuda
 # @profile
 # @jit(nogil=True)
 @jit(nopython=True)
-def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciting_freq, time_step, wavelength, laser_beam_radius, zeeman_radius, zeeman_distance, target_center_z, bohr_magnetron_scc, spline_fit, target_radius, intensity, laser_saturation_intensity, max_step_fit_function, probe_laser_angle):
+def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciting_freq, time_step, wavelength,
+             laser_beam_radius, zeeman_radius, zeeman_distance, target_center_z, bohr_magnetron_scc, spline_fit,
+             target_radius, intensity, laser_saturation_intensity, max_step_fit_function, probe_laser_angle,
+             slicing_position_array, cutoff_magnetic_field, capture_velocity, lande_factor_excited_state,
+             lande_factor_ground_state, freq_shift_splitting, ground_state_quantum_numbers_array,
+             quantum_numbers_excited_state):
+
     cutoff_number = 10000
-    magnetic_field_cutoff = 100E-4
+    magnetic_field_cutoff = cutoff_magnetic_field
     h_bar = scc.hbar
     r_target = target_radius
     loop_counter = 0
     bohr_magnetron = bohr_magnetron_scc
-    # initialize mot_counter for counting atoms entering mot, the indices of the atoms in the MOT and three lists for saving velocity components of these atoms + one list for saving velocity
+    # initialize mot_counter for counting atoms entering mot, the indices of the atoms in
+    # the MOT and three lists for saving velocity components of these atoms + one list for saving velocity
     atoms_in_mot = 0
     # indices_of_atoms_in_mot = []
     vel_x_atoms_in_mot = []
@@ -88,13 +95,15 @@ def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciti
     dead_atoms_lower_groundstate = []
     # vel_atoms_in_mot = []
 
-    plane_slice_pos = [0.0, 0.1, 0.2, 0.3, 0.38, 0.4, 0.49, 0.495, 0.5]
+    # plane_slice_pos = [0.0, 0.1, 0.2, 0.3, 0.38, 0.4, 0.49, 0.495, 0.5]
+    plane_slice_pos = slicing_position_array
     plane_slice_flags = []
     plane_slice_upper_groundstate = [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0]]
     plane_slice_lower_groundstate = [[0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0]]
+
     for i in range(len(plane_slice_pos)):
         plane_slice_flags.append(0)
-	
+
     # lists for saving atoms which have been getting excited at least once
     # excitment_list_x = []
     # excitment_list_y = []
@@ -107,10 +116,11 @@ def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciti
     # dead_atom_list_z = []
     # list for appending indices of dead atoms
     # dead_atom_list = []
-	
+
     # capture velocity of MOT according to Stefans document. TODO: Get this via GUI
-    capture_velocity = 120
-    # number of atoms which have a total velocity/z component of the velocity below the capture velocity of the MOT when entering the MOT
+    # capture_velocity = 120
+    # number of atoms which have a total velocity/z component
+    # of the velocity below the capture velocity of the MOT when entering the MOT
     capture_count_total_vel = 0
     capture_count_z_vel = 0
     count_vel_z_below_0 = 0
@@ -123,7 +133,7 @@ def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciti
     wavevector_x = 0
     wavevector_y = 0
     wavevector_z = -1
-	
+
     observing_specific_atoms = []
     start_x_vel_atoms_in_mot = []
     start_x_vel = []
@@ -141,10 +151,8 @@ def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciti
     excitation_freq_development = [0.0]
     excitation_probability_development = [0.0]
     zeeman_shift = [0.0]
-    ground_state_quantum_numbers = [-0.5, 0.5]
-
+    ground_state_quantum_numbers = ground_state_quantum_numbers_array
     # quantum_numbers_excited_state = [-1.5, -0.5, 0.5, 1.5]
-    quantum_numbers_excited_state = [-1.5, -0.5, 0.5, 1.5]
 
     excited_state_quantum_numbers = [0.0]
 
@@ -199,7 +207,7 @@ def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciti
         excitation_frequency = exciting_freq
         atom_dead = 1
 
-		# TODO: Divide time step from JSON by life time of excited state for normalizing time steps with a factor
+        # TODO: Divide time step from JSON by life time of excited state for normalizing time steps with a factor
         # Choose time step in a way that minimum free path length is at least 0.5 mm/0.0005 m
         # minimum_path_length = 1E-6
         minimum_path_length = max_step_length_fit_field_function(max_step_fit_function, z_pos - target_center_z)
@@ -218,14 +226,14 @@ def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciti
             current_groundstate = 0
             initial_state = 0
 
-        lande_factor_ground_state = 2.0023
-        lande_factor_excited_state = 1.335
-		
+        # lande_factor_ground_state = 2.0023
+        # lande_factor_excited_state = 1.335
+
         if i == 3:
             observing_specific_atoms.append(z_velocity)
 
         total_flight_distance = 0
-	
+
         # if the atom is not dead do the steps
         while atom_dead != 0:
             # [0.01, 0.02, 0.97] means 1% sigma minus, 2% pi and 97% sigma plus light
@@ -236,7 +244,7 @@ def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciti
             # initial_atom_time_step = minimum_path_length/(z_velocity + threshold)
             # atom_time_step = initial_atom_time_step
             total_flight_distance += z_pos
-            freq_shift_splitting = [-228E6, 0.0]
+            # freq_shift_splitting = [-228E6, 0.0]
             frequency_shift_list = [0.0, 0.0, 0.0, 0.0]
             current_excitation_freq = [0.0, 0.0, 0.0, 0.0]
             excitation_prob = [0.0, 0.0, 0.0, 0.0]
@@ -249,10 +257,10 @@ def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciti
             x_pos += x_velocity * atom_time_step
             y_pos += y_velocity * atom_time_step
             z_pos += z_velocity * atom_time_step
-			
+
             # derive the squared x- and y-position for the following comparisons if the position in the xy-plane is beyond some (geometrical) limit
             x_y_pos_component_squared = x_pos**2 + y_pos**2
-			
+
             # check if atoms move outside the laser beam or hit the wall of the MOT
             if x_y_pos_component_squared > light_beam_radius_squared or z_pos > 0.62 or z_pos < 0.0 or z_velocity < 0.0:
                 # set the index to 0 (=dead)
@@ -272,10 +280,10 @@ def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciti
                     observing_z_vel.append(-1)
 
                 continue
-				
+
             # is the atom is not hitting the rear wall of the MOT
             if z_pos < target_center_z + target_radius:
-			
+
                 # check if atom is inside the beam of the laser and if the frequency for exciting the atom is equal to the frequency of the laser
                 if x_y_pos_component_squared < light_beam_radius_squared:
                     for a in range(len(quantum_numbers_excited_state)):
@@ -461,6 +469,7 @@ def timestep(atom_count, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciti
 
 
 if __name__ == '__main__':
+    '''
     parser = argparse.ArgumentParser(description='Load necessary information from files')
     parser.add_argument('--sim_params_file',
                         help='Specify the JSON-file containing information about the simulation parameters')
@@ -485,7 +494,7 @@ if __name__ == '__main__':
                                                                                                             "C:/Users/ACW/Documents/JGU/NawiInf/Kurse/MA/Code/particle_simulation_ma/JSONs/atom_parameter_test_1.json",
                                                                                                             "C:/Users/ACW/Documents/JGU/NawiInf/Kurse/MA/Code/particle_simulation_ma/magnetic_field_measurement/MinusFitListtxt.txt",
                                                                                                             "C:/Users/ACW/Documents/JGU/NawiInf/Kurse/MA/Code/particle_simulation_ma/magnetic_field_measurement/maximum_step_length_MinusFitListtxt.txt")
-	'''
+
     print(maximum_distance)
 
     # mass of observed atom
@@ -555,7 +564,6 @@ if __name__ == '__main__':
     # educated guessing
     bin_count = 80
 
-	
     # laser properties
     natural_line_width = 2 * math.pi * 5.87E6
     intensity = sim_param_data['slower_laser_intensity']
@@ -570,9 +578,19 @@ if __name__ == '__main__':
     area_laser = math.pi * (sim_param_data['slower_laser_diameter']/2)**2
     area_atom = math.pi * Lithium_6.radius_atom**2
     photon_per_second_and_atom = photon_per_second/(area_laser/area_atom)
-	
+
     laser_beam_radius = sim_param_data['slower_laser_diameter']/2
     probe_laser_angle = sim_param_data['probe_laser_angle']
+    slicing_positions = sim_param_data['positions_for_slicing']
+    magnetic_field_cutoff = sim_param_data['B_field_cutoff']
+    capture_vel = sim_param_data['capture_velocity']
+
+    # properties of the atom
+    lande_factors_exc_state = atomic_data['lande_factor_excited_state']
+    lande_factors_ground_state = atomic_data['lande_factor_ground_state']
+    freq_offset = atomic_data['frequency_offset_ground_state']
+    ground_state_quantum_numbers = atomic_data['mf_ground_state_quantum_numbers']
+    exc_state_quantum_numbers = atomic_data['mf_excited_state_quantum_numbers']
 
     # test area, new JSON parameters read in
     print(sim_param_data['capture_velocity'])
@@ -587,10 +605,19 @@ if __name__ == '__main__':
     p_max = calculate_p_max(n, v_min, v_max, mass_lithium_6, temperature)
     # function call of timestep
     startTime = datetime.now()
-    atoms_in_mot, excitation_counter, capture_velocity, capture_count_z_velocity, observing_z_position, observing_magnetic_field, excitation_freq_development, excitation_probability_development, observing_z_velocity, vel_x_atoms_in_mot, vel_y_atoms_in_mot, vel_z_atoms_in_mot, vel_upper_groundstate, vel_lower_groundstate, start_z_vel_atoms_in_mot, start_vel_upper_state, start_vel_lower_state, zeeman_shift, loop_Counter, start_vel_z, ground_state_m_J, excited_state_m_J, vel_z_plane_slices_upper_gs, vel_z_plane_slices_lower_gs, vel_dead_atoms_upper, vel_dead_atoms_lower = timestep(n, p_max, v_min, v_max, x_min, x_max, y_min, y_max,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                     exciting_freq, time_step, wavelength, laser_beam_radius,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                     zeeman_radius, zeeman_distance, target_center_z, bohr_magnetron,                                                                                                                                                                                                                                                                                                                                                                                                                                            spline_fit, target_radius, intensity, laser_saturation_intensity,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                     max_step_length_file, probe_laser_angle)
+    # line breaks used for better readability
+    atoms_in_mot, excitation_counter, capture_velocity, capture_count_z_velocity, observing_z_position,\
+    observing_magnetic_field, excitation_freq_development, excitation_probability_development, observing_z_velocity,\
+    vel_x_atoms_in_mot, vel_y_atoms_in_mot, vel_z_atoms_in_mot, vel_upper_groundstate, vel_lower_groundstate,\
+    start_z_vel_atoms_in_mot, start_vel_upper_state, start_vel_lower_state, zeeman_shift, loop_Counter, start_vel_z,\
+    ground_state_m_J, excited_state_m_J, vel_z_plane_slices_upper_gs, vel_z_plane_slices_lower_gs, vel_dead_atoms_upper,\
+    vel_dead_atoms_lower = timestep(n, p_max, v_min, v_max, x_min, x_max, y_min, y_max, exciting_freq, time_step,
+                                    wavelength, laser_beam_radius, zeeman_radius, zeeman_distance, target_center_z,
+                                    bohr_magnetron, spline_fit, target_radius, intensity, laser_saturation_intensity,
+                                    max_step_length_file, probe_laser_angle, slicing_positions, magnetic_field_cutoff,
+                                    capture_vel, lande_factors_exc_state, lande_factors_ground_state, freq_offset,
+                                    ground_state_quantum_numbers, exc_state_quantum_numbers)
+
     runtime = datetime.now() - startTime
     print(runtime)
     print("Number of total loops:", loop_Counter)

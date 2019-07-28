@@ -1,3 +1,4 @@
 *.lprof
 *__pycache__
 .idea
+simulation_results/
